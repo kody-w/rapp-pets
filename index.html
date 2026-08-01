@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>rapp-pets — the Adopt Me shape, done honestly</title>
+<meta name="description" content="A pet is your alleles drawn. Derived from a mint-once rappid tail, so it cannot be re-rolled, faked, or edited.">
+<meta name="theme-color" content="#141413">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="kicker"><span class="spike">&#10033;</span> rapp-pets / 0.1</div>
+  <h1>Alleles are to this ecosystem<br>what pets are to Adopt&nbsp;Me.</h1>
+  <p class="lede">
+    Adopt Me works because the pet is <b>yours specifically</b>: it hatched a
+    certain way, it is a certain rarity, and everyone can see it. Rarity creates
+    attachment; attachment creates a culture.
+  </p>
+  <p class="lede">
+    The naive copy fails, though, because Adopt Me's rarity is
+    <b>server-authoritative</b> &mdash; a server rolls, records, and is trusted
+    because it is the only writer. RAPP has no server. A rarity you <i>store</i>
+    is worth nothing, because I can type <code>{"rarity":"legendary"}</code> into
+    my own file. <b>Any design where rareness is asserted is a design where
+    rareness is free.</b>
+  </p>
+  <p class="lede pull">
+    So the pet is not a record. The pet is <b>your alleles drawn</b>, and an
+    allele is derived from the rappid tail &mdash; minted exactly once, never
+    re-rolled. Nobody assigns it. Nobody can fake it. Anyone can verify it
+    offline with a hash and no network.
+  </p>
+</header>
+
+<main>
+
+<!-- ── nursery ─────────────────────────────────────────── -->
+<section class="sec">
+  <h2><span class="spike">&#10033;</span> The nursery</h2>
+  <p class="sub">
+    Plant an organism and meet what it turned out to be. You do not choose it,
+    and neither does anyone else &mdash; it falls out of the hash of an identity
+    that can only be minted once.
+  </p>
+
+  <div class="row">
+    <button id="plant" class="btn">Plant an organism</button>
+    <button id="plant10" class="btn ghost">Plant ten</button>
+    <button id="wipe" class="btn ghost">Clear</button>
+  </div>
+
+  <div class="row lookup">
+    <input id="tail" type="text" spellcheck="false" autocapitalize="off"
+           autocomplete="off" placeholder="…or paste a 64-hex rappid tail">
+    <button id="look" class="btn">Look it up</button>
+  </div>
+  <div id="err" class="err"></div>
+
+  <div id="nursery" class="nursery"></div>
+  <div id="tally" class="tally"></div>
+</section>
+
+<!-- ── kinship ─────────────────────────────────────────── -->
+<section class="sec">
+  <h2><span class="spike">&#10033;</span> Kinship</h2>
+  <p class="sub">
+    Two organisms may carry the <b>same allele</b>, and that is a real relation
+    between them &mdash; one you can verify <b>without either one disclosing
+    anything</b> beyond a public tail. Paste two and see what they share.
+  </p>
+  <div class="two">
+    <div><label class="lbl" for="kA">organism A</label>
+      <input id="kA" type="text" spellcheck="false" autocapitalize="off" placeholder="64-hex tail"></div>
+    <div><label class="lbl" for="kB">organism B</label>
+      <input id="kB" type="text" spellcheck="false" autocapitalize="off" placeholder="64-hex tail"></div>
+  </div>
+  <div class="row"><button id="kin" class="btn">Compare</button>
+    <button id="kinfill" class="btn ghost">Use two from the nursery</button></div>
+  <div id="kinout" class="kinout"></div>
+</section>
+
+<!-- ── anatomy ─────────────────────────────────────────── -->
+<section class="sec">
+  <h2><span class="spike">&#10033;</span> What each trait does</h2>
+  <table class="tbl">
+    <thead><tr><th>trait</th><th>bits</th><th>drives the pet's&hellip;</th></tr></thead>
+    <tbody>
+      <tr><td><code>coat</code></td><td>8</td><td>colourway and pattern</td></tr>
+      <tr><td><code>tempo</code></td><td>8</td><td>bob speed &mdash; how eagerly it acts</td></tr>
+      <tr><td><code>voice</code></td><td>8</td><td>species silhouette, ear lift, tail curl</td></tr>
+      <tr><td><code>glow</code></td><td>16</td><td>the aura &mdash; the one tiered slot</td></tr>
+    </tbody>
+  </table>
+  <p class="sub">
+    <b>Only <code>glow</code> is tiered</b>, because the spec's bands are defined
+    over 16 bits. <code>coat</code>, <code>tempo</code> and <code>voice</code> are
+    8-bit variety: they colour the pet, they do not rank it. Calling an 8-bit
+    value "mythic" would be inventing rarity the spec does not define.
+  </p>
+
+  <table class="tbl">
+    <thead><tr><th>tier</th><th>band (exclusive)</th><th>odds</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tier common">common</span></td><td><code>&lt; 0xC000</code></td><td>3 in 4</td></tr>
+      <tr><td><span class="tier uncommon">uncommon</span></td><td><code>0xC000–0xEFFF</code></td><td>~1 in 5</td></tr>
+      <tr><td><span class="tier rare">rare</span></td><td><code>0xF000–0xFEFF</code></td><td>~1 in 17</td></tr>
+      <tr><td><span class="tier ultra">ultra</span></td><td><code>0xFF00–0xFFFE</code></td><td>~1 in 257</td></tr>
+      <tr><td><span class="tier mythic">mythic</span></td><td><code>0xFFFF</code></td><td>1 in 65,536</td></tr>
+    </tbody>
+  </table>
+  <p class="sub">
+    Bands are <b>exclusive</b>, so the odds are the band widths, not cumulative
+    thresholds. Rarity is <b>honest work</b>: to get a rare allele you mint
+    identities until one lands, exactly like a vanity address. The scarcity is
+    real because the electricity was real.
+  </p>
+</section>
+
+<!-- ── limits ──────────────────────────────────────────── -->
+<section class="sec">
+  <h2><span class="spike">&#10033;</span> What this must never become</h2>
+  <ul class="nots">
+    <li><b>Not a token.</b> No transfer, no balance, no price. An allele is a
+      property of an identity, and identity is mint-once &mdash; there is nothing
+      to detach and sell. You <i>have</i> an allele; you never trade it.</li>
+    <li><b>Not a gate.</b> An allele never affects what an organism may
+      <i>do</i>. Capability comes from the mandate (Art.&nbsp;LVI), never from
+      cosmetics. A mythic coat buys you a mythic coat.</li>
+    <li><b>Not private.</b> Alleles are computed from the public tail &mdash; pure
+      DOG, bones-side by construction. There is nothing here to leak.</li>
+    <li><b>Not inherited numerically.</b> An organism planted from another is a
+      <i>new mint</i>: fresh tail, fresh alleles. Heritable-by-copy would let one
+      lucky mint be cloned into infinite rare children and the scarcity would
+      evaporate in a day. What is inherited is <b>descent</b> &mdash; the chain of
+      who planted whom.</li>
+    <li><b>No fusion, yet.</b> Adopt Me fuses four identical pets into a Neon.
+      The honest analogue is an <b>attestation</b> &mdash; four owners co-signing
+      that they share a trait &mdash; which needs &sect;10 signatures and
+      estate-owner authority. It is <b>specified upstream and not implemented
+      here</b>. Shipping it before signing exists would be the same
+      false-authority defect that retired <code>rapp-frame-net</code>.</li>
+  </ul>
+</section>
+
+<!-- ── verify ──────────────────────────────────────────── -->
+<section class="sec">
+  <h2><span class="spike">&#10033;</span> Verify any of it</h2>
+  <p class="sub">Every pet on this page came out of this, and nothing else:</p>
+  <pre><code>import hashlib
+def allele(trait, tail, bits=16):
+    h = hashlib.sha256(f"rapp/1:allele:{trait}\n{tail}".encode()).hexdigest()
+    return int(h[:bits // 4], 16)</code></pre>
+  <p class="sub">
+    Same input, same answer, on any machine, forever. That is the whole design.
+    <code>allele.js</code> and <code>pets.js</code> in this repo are byte-identical
+    to the copies in <a href="https://github.com/kody-w/rappdex">rappdex</a>, so
+    the two cannot drift.
+  </p>
+</section>
+
+</main>
+
+<footer class="foot">
+  <p>
+    Spec: <a href="https://github.com/kody-w/rapp-mapp/blob/main/ALLELE.md"><code>rapp-allele/1.0</code></a>
+    in kody-w/rapp-mapp. Identity rules: RAPP/1 &sect;6.2 (mint-once) and &sect;5
+    (domain separation). Governance:
+    <a href="https://github.com/kody-w/RAPP">RAPP/CONSTITUTION.md</a>.
+  </p>
+  <p class="fine">Everything on this page is computed in your browser. No account, no server, no network after load.</p>
+</footer>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
