@@ -1,5 +1,8 @@
 import { alleles, rollTail, isTail, TRAITS } from './allele.js';
 import { renderPet, petOf, PET_CSS } from './pets.js';
+import { cartridgeOf, keepsakeUrl } from './holo.js';
+import { crossBreed } from './genetics.mjs';
+import { fuse, verifyDescent, costOfGeneration, FUSE_ARITY } from './fuse.js';
 
 const s = document.createElement('style');
 s.textContent = PET_CSS;
@@ -12,9 +15,45 @@ const esc = (v) => String(v ?? '').replace(/[&<>"]/g, m => ({ '&': '&amp;', '<':
 const nursery = [];
 let seq = 0;
 
-async function add(tail) {
+async function add(tail, gen = 0) {
   const a = await alleles(tail);
-  nursery.unshift({ tail, a, pet: petOf(a), n: ++seq });
+  // The cartridge is the organism's real body — the 2D figure below is a
+  // projection of this same genome, so the two can never disagree.
+  const cart = await cartridgeOf(tail, a);
+  nursery.unshift({ tail, a, pet: petOf(a), cart, gen, n: ++seq });
+}
+
+/* ── fusion ──
+   Four organisms become one. See fuse.js for why this is the mechanic worth
+   copying from Adopt Me, and why it can be added without inventing rarity. */
+const selected = [];
+
+function toggleSelect(tail) {
+  const i = selected.indexOf(tail);
+  if (i >= 0) selected.splice(i, 1);
+  else if (selected.length < FUSE_ARITY) selected.push(tail);
+  draw();
+}
+
+function drawSelection() {
+  const box = $('#fusesel');
+  if (!box) return;
+  const btn = $('#fuse');
+  if (btn) btn.disabled = selected.length !== FUSE_ARITY;
+
+  if (!selected.length) {
+    box.innerHTML = `<p class="sub">Click organisms in the nursery to select
+      ${FUSE_ARITY} of them — or use the button above.</p>`;
+    return;
+  }
+  const names = selected.map(t => {
+    const o = nursery.find(x => x.tail === t);
+    return o ? esc(o.pet.label) : esc(t.slice(0, 10));
+  });
+  box.innerHTML = `<p class="sub"><b>${selected.length}/${FUSE_ARITY}</b> selected:
+    ${names.join(' · ')}${selected.length < FUSE_ARITY
+      ? ` — ${FUSE_ARITY - selected.length} more.`
+      : ' — ready.'}</p>`;
 }
 
 function tierRank(t) {
@@ -24,15 +63,27 @@ function tierRank(t) {
 function draw() {
   const box = $('#nursery');
   box.innerHTML = nursery.map(o => `
-    <figure class="pet ${o.pet.tier}">
+    <figure class="pet ${o.pet.tier}${selected.includes(o.tail) ? ' picked' : ''}" data-tail="${esc(o.tail)}">
       ${renderPet(o.a, { id: 'n' + o.n, size: 170 })}
       <figcaption>
-        <div class="pname">${esc(o.pet.label)}</div>
+        <div class="pname">${esc(o.pet.label)}${o.gen ? ` <span class="gen">gen ${o.gen}</span>` : ''}</div>
         <div class="pmeta">${esc(o.pet.pattern)} · ${o.pet.period}s</div>
         <span class="tier ${o.pet.tier}">${o.pet.tier}</span>
         <div class="ptail" title="${esc(o.tail)}">${esc(o.tail.slice(0, 16))}…</div>
+        <a class="holo" href="${esc(keepsakeUrl(o.cart))}" target="_blank" rel="noopener"
+           title="Opens in the hologram player. The whole organism rides in the URL fragment, which is never sent to a server.">see it in 3D →</a>
       </figcaption>
     </figure>`).join('');
+
+  // Clicking an organism selects it for fusion — the nursery is the pen.
+  box.querySelectorAll('.pet').forEach(fig => {
+    fig.addEventListener('click', e => {
+      if (e.target.closest('a')) return;   // let the 3D link through
+      toggleSelect(fig.dataset.tail);
+    });
+  });
+
+  drawSelection();
 
   if (!nursery.length) { $('#tally').textContent = ''; return; }
 
@@ -99,14 +150,109 @@ $('#kin').addEventListener('click', async () => {
     </table>
     <p class="sub">${shared.length
       ? `They share <b>${shared.join(', ')}</b>. That is a real kinship — verifiable by anyone, offline, with neither organism disclosing anything private.`
-      : `No shared alleles. They are unrelated in every trait — which, at these odds, is the ordinary case.`}</p>`;
+      : `No shared alleles. They are unrelated in every trait — which, at these odds, is the ordinary case.`}</p>
+    <div class="row"><button id="breed" class="btn">Breed these two</button></div>
+    <div id="brood"></div>`;
+
+  $('#breed').addEventListener('click', () => breed(A, B));
 });
+
+/* ── breeding ──
+   Kinship says how two organisms are related. Breeding makes a third.
+
+   The recombination is not ours: it is `crossBreed` from the cabinet's own
+   genetics, vendored byte-identical, so a creature bred here is bred exactly
+   the way the cabinet breeds it. That is what makes the child a real organism
+   rather than a picture of one — it carries a content-addressed id the cabinet
+   will re-derive and accept, and it names both parents.
+
+   It is deterministic and order-sensitive: the same pair always yields the same
+   child, and A×B is not B×A. So a bred creature can be re-derived by anyone
+   holding the parents, and never has to be stored or trusted. */
+async function breed(tailA, tailB) {
+  const box = $('#brood');
+  box.innerHTML = `<p class="sub">breeding…</p>`;
+
+  const [cA, cB] = [
+    await cartridgeOf(tailA, await alleles(tailA)),
+    await cartridgeOf(tailB, await alleles(tailB)),
+  ];
+  const child = await crossBreed(cA, cB);
+
+  const [form, surface] = child.genome.layers;
+  box.innerHTML = `
+    <div class="child">
+      <div class="pname">${esc(child.title)}</div>
+      <div class="pmeta">${esc(form.shape)} · ${esc(surface.pattern)} · ${form.limbs} limbs</div>
+      <div class="swatches">${surface.palette
+        .map(c => `<i style="background:${esc(c)}" title="${esc(c)}"></i>`).join('')}</div>
+      <div class="ptail">id <code>${esc(child.id)}</code> — derived from the genome,
+        so anyone can re-derive this exact child from these two parents.</div>
+      <div class="ptail">parents <code>${esc(child.parents.join(' × '))}</code></div>
+      <a class="holo" href="${esc(keepsakeUrl(child))}" target="_blank" rel="noopener">see the child in 3D →</a>
+    </div>`;
+}
 
 $('#kinfill').addEventListener('click', async () => {
   while (nursery.length < 2) await add(rollTail());
   $('#kA').value = nursery[0].tail;
   $('#kB').value = nursery[1].tail;
   draw();
+});
+
+/* ── fusion controls ── */
+$('#fusefill').addEventListener('click', async () => {
+  while (nursery.length < FUSE_ARITY) await add(rollTail());
+  selected.length = 0;
+  nursery.slice(0, FUSE_ARITY).forEach(o => selected.push(o.tail));
+  draw();
+});
+
+$('#fuseclear').addEventListener('click', () => { selected.length = 0; draw(); });
+
+$('#fuse').addEventListener('click', async () => {
+  const out = $('#fuseout');
+  const parents = selected.slice();
+  if (parents.length !== FUSE_ARITY) return;
+
+  out.innerHTML = `<p class="sub">fusing…</p>`;
+
+  const childTail = await fuse(parents);
+  // Never take our own word for it — recompute the descent the way a stranger
+  // would, and show the result either way.
+  const proven = await verifyDescent(childTail, parents);
+
+  // The child's generation is one deeper than its deepest parent, so cost
+  // compounds honestly: gen 2 really did take sixteen minted identities.
+  const gen = 1 + Math.max(...parents.map(t => (nursery.find(o => o.tail === t) || {}).gen || 0));
+
+  await add(childTail, gen);
+  const kid = nursery[0];
+
+  const names = parents.map(t => {
+    const o = nursery.find(x => x.tail === t);
+    return o ? o.pet.label : t.slice(0, 10);
+  });
+
+  out.innerHTML = `
+    <div class="child">
+      <div class="pname">${esc(kid.pet.label)} <span class="gen">gen ${gen}</span></div>
+      <div class="pmeta">${esc(kid.pet.pattern)} · ${kid.pet.period}s ·
+        <span class="tier ${kid.pet.tier}">${kid.pet.tier}</span></div>
+      <div class="ptail">from ${esc(names.join(' + '))}</div>
+      <div class="ptail">child tail <code>${esc(childTail.slice(0, 24))}…</code></div>
+      <div class="ptail">${proven
+        ? `descent <b>verified</b> — recomputed from the four parents, offline.`
+        : `descent could not be verified.`}</div>
+      <div class="ptail">a gen ${gen} organism costs
+        <b>${costOfGeneration(gen)}</b> minted identities.
+        Its tier is whatever the ordinary odds gave it — fusion does not uplift.</div>
+      <a class="holo" href="${esc(keepsakeUrl(kid.cart))}" target="_blank" rel="noopener">see it in 3D →</a>
+    </div>`;
+
+  selected.length = 0;
+  draw();
+  out.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 });
 
 /* Open with one planted so the page is never an empty promise. */

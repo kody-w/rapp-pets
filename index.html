@@ -83,6 +83,47 @@
   <div id="kinout" class="kinout"></div>
 </section>
 
+<!-- ── fusion ──────────────────────────────────────────── -->
+<section class="sec">
+  <h2><span class="spike">&#10033;</span> Fusion</h2>
+  <p class="sub">
+    Adopt Me's real engine is not its egg odds &mdash; it is the fusion sink.
+    Four grown pets make a Neon, four Neons make a Mega, so a Mega costs
+    sixteen pets. That one rule is what makes a <b>duplicate</b> worth keeping:
+    without it most pulls are boring and get discarded; with it, every boring
+    pull is an ingredient.
+  </p>
+  <p class="sub">
+    Same problem here &mdash; 3 in 4 organisms are common. So: <b>four
+    organisms fuse into one.</b>
+    <code>fuse(tails) = sha256("rapp/1:fuse\n" + sorted(tails))</code>
+    The result is an ordinary tail, so the child is an ordinary organism with
+    the <b>ordinary odds</b>. Nothing is uplifted and no tier is inflated
+    &mdash; fusing four mythics does not produce something better than mythic.
+  </p>
+  <p class="sub">
+    What the child <i>does</i> carry is its <b>generation</b>, and generation is
+    arithmetic: gen&nbsp;1 costs 4 minted identities, gen&nbsp;2 costs 16,
+    gen&nbsp;3 costs 64. You cannot fake it, because you cannot produce the
+    child without knowing four real mint-once tails &mdash; and anyone can
+    recompute it offline to check. Depth is the scarce axis, and it is honest
+    by construction.
+  </p>
+  <p class="sub fineprint">
+    <b>What this honestly cannot do.</b> It proves the four parents existed. It
+    does not prove they were spent. With no ledger there is nothing to burn, so
+    the same four tails fuse to the same child again. Fusion is proof of
+    accumulated minting, not proof of sacrifice.
+  </p>
+  <div class="row">
+    <button id="fusefill" class="btn ghost">Select four from the nursery</button>
+    <button id="fuse" class="btn" disabled>Fuse</button>
+    <button id="fuseclear" class="btn ghost">Clear selection</button>
+  </div>
+  <div id="fusesel" class="fusesel"></div>
+  <div id="fuseout"></div>
+</section>
+
 <!-- ── anatomy ─────────────────────────────────────────── -->
 <section class="sec">
   <h2><span class="spike">&#10033;</span> What each trait does</h2>

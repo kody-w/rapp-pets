@@ -84,3 +84,26 @@ pre code{font-family:var(--mono);font-size:12.5px;line-height:1.65}
   font-size:13px;line-height:1.7;color:var(--mut)}
 .foot p{margin:0 0 8px}
 .fine{font-size:12px}
+
+/* ── holograms ─────────────────────────────────────────────── */
+.holo{display:inline-block;margin-top:7px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--mut);text-decoration:none;
+  border-bottom:1px solid var(--line2);padding-bottom:1px}
+.holo:hover{color:var(--ink);border-color:var(--ink)}
+.child{margin-top:14px;padding:15px 16px;background:var(--tile);
+  border:1px solid var(--line);border-radius:11px}
+.child .pname{font-size:15px;font-weight:600;margin-bottom:3px}
+.child .pmeta{font-size:12px;color:var(--mut);margin-bottom:9px}
+.child .ptail{font-size:11px;color:var(--mut);line-height:1.6;margin-top:5px}
+.child code{font-family:var(--mono);font-size:10px;background:var(--cream);
+  padding:1px 5px;border-radius:4px}
+.swatches{display:flex;gap:5px;margin:8px 0}
+.swatches i{width:22px;height:22px;border-radius:5px;display:inline-block;
+  border:1px solid var(--line2)}
+.pet{cursor:pointer;transition:box-shadow .12s,transform .12s}
+.pet.picked{box-shadow:0 0 0 2px var(--ink);transform:translateY(-2px)}
+.gen{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+  background:var(--ink);color:var(--cream);padding:2px 6px;border-radius:9999px;
+  vertical-align:middle;margin-left:5px}
+.fusesel{margin-top:12px}
+.fineprint{border-left:2px solid var(--line2);padding-left:12px;color:var(--mut)}
