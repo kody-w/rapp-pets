@@ -90,11 +90,18 @@ anything** beyond a public tail. The site has a comparator for exactly this.
   mint*: fresh tail, fresh alleles. Heritable-by-copy would let one lucky mint be
   cloned into infinite rare children and the scarcity would evaporate in a day.
   What *is* inherited is **descent** — the chain of who planted whom.
-- **No fusion, yet.** Adopt Me fuses four identical pets into a Neon. The honest
-  analogue is an **attestation** — four owners co-signing that they share a
-  trait — which needs §10 signatures and estate-owner authority. It is
-  **specified upstream and not implemented here.** Shipping it before signing
-  exists would be the same false-authority defect that retired `rapp-frame-net`.
+- **Fusion is implemented — but it is not an attestation.** Four organisms fuse
+  into a child via `fuse(tails) = sha256("rapp/1:fuse\n" + sorted(tails))`, which
+  is pure derivation: the child is an ordinary 64-hex tail whose alleles come out
+  of the ordinary bands. Measured over 4,000 fusions the children land
+  74.5 / 19.3 / 5.9 / 0.35 / 0 — the spec's distribution, **uninflated**. Fusing
+  four mythics does not produce something better than mythic; the scarce axis is
+  *generation* (gen 1 costs 4 mints, gen 2 costs 16, gen 3 costs 64), which is
+  arithmetic rather than assertion.
+  What is still **not** implemented is the **co-signed attestation** — four
+  owners jointly asserting a shared trait. That needs §10 signatures and
+  estate-owner authority, and shipping it before signing exists would be the same
+  false-authority defect that retired `rapp-frame-net`.
 
 ## Verify it
 
