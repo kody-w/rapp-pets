@@ -107,3 +107,8 @@ pre code{font-family:var(--mono);font-size:12.5px;line-height:1.65}
   vertical-align:middle;margin-left:5px}
 .fusesel{margin-top:12px}
 .fineprint{border-left:2px solid var(--line2);padding-left:12px;color:var(--mut)}
+.pet.spent{opacity:.5;cursor:not-allowed}
+.pet.spent .petsvg,.pet.spent svg{filter:grayscale(1)}
+.burned{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--mut);border:1px dashed var(--line2);border-radius:9999px;
+  padding:2px 7px;display:inline-block;margin-top:5px}

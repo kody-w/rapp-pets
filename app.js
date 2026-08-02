@@ -2,7 +2,8 @@ import { alleles, rollTail, isTail, TRAITS } from './allele.js';
 import { renderPet, petOf, PET_CSS } from './pets.js';
 import { cartridgeOf, keepsakeUrl } from './holo.js';
 import { crossBreed } from './genetics.mjs';
-import { fuse, verifyDescent, costOfGeneration, FUSE_ARITY } from './fuse.js';
+import { verifyDescent, costOfGeneration, FUSE_ARITY,
+         fuseAndBurn, spendRegistry, nullifierOf } from './fuse.js';
 
 const s = document.createElement('style');
 s.textContent = PET_CSS;
@@ -20,13 +21,28 @@ async function add(tail, gen = 0) {
   // The cartridge is the organism's real body — the 2D figure below is a
   // projection of this same genome, so the two can never disagree.
   const cart = await cartridgeOf(tail, a);
-  nursery.unshift({ tail, a, pet: petOf(a), cart, gen, n: ++seq });
+  const nul = await nullifierOf(tail);
+  nursery.unshift({ tail, a, pet: petOf(a), cart, gen, nul, n: ++seq });
 }
 
 /* ── fusion ──
    Four organisms become one. See fuse.js for why this is the mechanic worth
    copying from Adopt Me, and why it can be added without inventing rarity. */
 const selected = [];
+
+/* The spend registry, backed by localStorage so a burn survives a reload.
+   This is the local half of the burn: on this device a spent organism simply
+   cannot be spent again. Nothing here is a claim about other devices — those
+   are handled by detection, not prevention. */
+const SPEND_KEY = 'rapp-pets/spent/1';
+const spendStore = {
+  read() { try { return JSON.parse(localStorage.getItem(SPEND_KEY) || '{}'); } catch { return {}; } },
+  write(o) { try { localStorage.setItem(SPEND_KEY, JSON.stringify(o)); } catch {} },
+  get(k) { return this.read()[k]; },
+  set(k, v) { const o = this.read(); o[k] = v; this.write(o); },
+  entries() { return Object.entries(this.read()); },
+};
+const registry = spendRegistry(spendStore);
 
 function toggleSelect(tail) {
   const i = selected.indexOf(tail);
@@ -63,12 +79,13 @@ function tierRank(t) {
 function draw() {
   const box = $('#nursery');
   box.innerHTML = nursery.map(o => `
-    <figure class="pet ${o.pet.tier}${selected.includes(o.tail) ? ' picked' : ''}" data-tail="${esc(o.tail)}">
+    <figure class="pet ${o.pet.tier}${selected.includes(o.tail) ? ' picked' : ''}${registry.isSpent(o.nul) ? ' spent' : ''}" data-tail="${esc(o.tail)}">
       ${renderPet(o.a, { id: 'n' + o.n, size: 170 })}
       <figcaption>
         <div class="pname">${esc(o.pet.label)}${o.gen ? ` <span class="gen">gen ${o.gen}</span>` : ''}</div>
         <div class="pmeta">${esc(o.pet.pattern)} · ${o.pet.period}s</div>
         <span class="tier ${o.pet.tier}">${o.pet.tier}</span>
+        ${registry.isSpent(o.nul) ? '<div class="burned">spent — fused away</div>' : ''}
         <div class="ptail" title="${esc(o.tail)}">${esc(o.tail.slice(0, 16))}…</div>
         <a class="holo" href="${esc(keepsakeUrl(o.cart))}" target="_blank" rel="noopener"
            title="Opens in the hologram player. The whole organism rides in the URL fragment, which is never sent to a server.">see it in 3D →</a>
@@ -79,6 +96,8 @@ function draw() {
   box.querySelectorAll('.pet').forEach(fig => {
     fig.addEventListener('click', e => {
       if (e.target.closest('a')) return;   // let the 3D link through
+      const o = nursery.find(x => x.tail === fig.dataset.tail);
+      if (o && registry.isSpent(o.nul)) return;   // a spent organism is gone
       toggleSelect(fig.dataset.tail);
     });
   });
@@ -217,7 +236,19 @@ $('#fuse').addEventListener('click', async () => {
 
   out.innerHTML = `<p class="sub">fusing…</p>`;
 
-  const childTail = await fuse(parents);
+  // fuseAndBurn refuses parents this device has already consumed, so the burn
+  // is enforced rather than merely described.
+  let childTail, spent;
+  try {
+    ({ child: childTail, spent } = await fuseAndBurn(parents, registry));
+  } catch (e) {
+    out.innerHTML = `<p class="err">${esc(e.message)}</p>
+      <p class="sub">A spent organism is gone. That is what makes the cost real.</p>`;
+    selected.length = 0;
+    draw();
+    return;
+  }
+
   // Never take our own word for it — recompute the descent the way a stranger
   // would, and show the result either way.
   const proven = await verifyDescent(childTail, parents);
@@ -244,6 +275,9 @@ $('#fuse').addEventListener('click', async () => {
       <div class="ptail">${proven
         ? `descent <b>verified</b> — recomputed from the four parents, offline.`
         : `descent could not be verified.`}</div>
+      <div class="ptail">burned <b>${spent.length}</b> organisms · nullifier
+        <code>${esc(spent[0].slice(0, 16))}…</code> — those four cannot be spent
+        again here, and if they are spent anywhere else the collision proves it.</div>
       <div class="ptail">a gen ${gen} organism costs
         <b>${costOfGeneration(gen)}</b> minted identities.
         Its tier is whatever the ordinary odds gave it — fusion does not uplift.</div>

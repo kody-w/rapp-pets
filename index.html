@@ -110,10 +110,17 @@
     by construction.
   </p>
   <p class="sub fineprint">
-    <b>What this honestly cannot do.</b> It proves the four parents existed. It
-    does not prove they were spent. With no ledger there is nothing to burn, so
-    the same four tails fuse to the same child again. Fusion is proof of
-    accumulated minting, not proof of sacrifice.
+    <b>What burning actually gets you.</b> Each parent emits a <b>nullifier</b>
+    &mdash; a spend-marker only its holder can compute, identical every time it
+    is produced. On this device the burn is <b>enforced</b>: a spent organism
+    cannot be spent again. Across devices it is <b>detected</b>, because
+    spending one organism into two children publishes the same nullifier twice,
+    and anyone holding both children holds the proof. No authority adjudicates
+    that &mdash; the collision is the adjudication.
+    What still needs an authority is <i>ordering</i>: deciding which of two
+    conflicting fusions came first needs a clock somebody agrees on. So
+    equivocation is caught, not arbitrated, and this page will not pretend to a
+    verdict it cannot reach.
   </p>
   <div class="row">
     <button id="fusefill" class="btn ghost">Select four from the nursery</button>
