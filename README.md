@@ -1,5 +1,9 @@
 # rapp-pets
 
+<!-- rapp1:network-header:start -->
+[![RAPP/1](https://kody-w.github.io/rapp-hive-public/portfolio/badges/rapp-pets.svg)](https://github.com/kody-w/rapp-hive-public/blob/main/portfolio/repos/rapp-pets.md) · **New to RAPP?** [Start here: get your Brainstem →](https://github.com/kody-w/rapp-installer#start-here)
+<!-- rapp1:network-header:end -->
+
 > **Alleles are to this ecosystem what pets are to Adopt Me.**
 
 **→ https://kody-w.github.io/rapp-pets/**
